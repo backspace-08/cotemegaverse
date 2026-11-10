@@ -60,8 +60,8 @@ async def season_status() -> dict:
 async def run_season_close(bot) -> dict:
     """Payout to every ranked player, soft-reset them, then open a new season.
 
-    The end-of-season notice goes to *every* user — including those who never
-    played — so the leagues and their rewards are at least seen.
+    The end-of-season notice goes to *every* user - including those who never
+    played - so the leagues and their rewards are at least seen.
     """
     season = await run_db(ensure_current_season)
     ranked = await run_db(list_ranked_users)
@@ -87,7 +87,7 @@ async def run_season_close(bot) -> dict:
             logger.error(f"Season payout error for {user_id}: {e}")
         await asyncio.sleep(0.05)
 
-    # everyone restarts calibration at 0/10 — ranked players and those who
+    # everyone restarts calibration at 0/10 - ranked players and those who
     # never reached 10 matches alike
     reset = await run_db(
         soft_reset_all_ratings,

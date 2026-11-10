@@ -44,7 +44,7 @@ async def _da_callback(request: web.Request) -> web.Response:
     if not code:
         return web.Response(
             status=400,
-            text=_page("DonationAlerts", "В ссылке нет code — начни заново: /da_auth"),
+            text=_page("DonationAlerts", "В ссылке нет code - начни заново: /da_auth"),
             content_type="text/html",
         )
     ok, message = await exchange_code(code, request.query.get("state"))

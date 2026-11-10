@@ -5,7 +5,7 @@ Russian is the default locale. English translations live in
 in ``core.locales.long`` and are referenced by ``@name`` keys.
 
 Fallback is always the Russian source string, so a missing translation never
-breaks a message — it only shows Russian.
+breaks a message - it only shows Russian.
 """
 
 from core.locales import LONG
@@ -28,7 +28,7 @@ def normalize(lang: str | None) -> str:
 
 def with_quit(lang: str | None, text: str) -> str:
     """Append the standard "/quit" hint used by every input prompt."""
-    return f"{text}\n\n{t(lang, '/quit — отмена.')}"
+    return f"{text}\n\n{t(lang, '/quit - отмена.')}"
 
 
 def t(lang: str | None, key: str, **kwargs) -> str:

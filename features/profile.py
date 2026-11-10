@@ -21,7 +21,7 @@ async def show_profile(callback: CallbackQuery, bot: Bot, user_id: int, lang: st
         await callback.answer(t(lang, "Профиль не найден"), show_alert=True)
         return
 
-    created_at = data.created_at.strftime("%d.%m.%Y") if data.created_at else "—"
+    created_at = data.created_at.strftime("%d.%m.%Y") if data.created_at else "-"
     name = data.first_name or data.username or t(lang, "Игрок")
     if data.rating_matches < ARENA_CALIBRATION_MATCHES:
         rating_line = t(

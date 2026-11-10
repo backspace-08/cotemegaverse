@@ -145,7 +145,7 @@ def character_nav_kb(
         cost = level_cost(rarity, level)
         builder.row(
             InlineKeyboardButton(
-                text=t(lang, "⬆️ Улучшить до Lv.{level} — {cost}🔮", level=level + 1, cost=cost),
+                text=t(lang, "⬆️ Улучшить до Lv.{level} - {cost}🔮", level=level + 1, cost=cost),
                 callback_data=LevelUpCB(char_id=char_id, rarity=rarity, page=page).pack(),
             )
         )
@@ -281,7 +281,7 @@ def admin_users_list_kb(
     for offset, user in enumerate(users):
         name = user["first_name"] or (f"@{user['username']}" if user["username"] else str(user["user_id"]))
         builder.button(
-            text=f"{start + offset}. {name[:40]} — {user.get('points') or 0} 💠",
+            text=f"{start + offset}. {name[:40]} - {user.get('points') or 0} 💠",
             callback_data=AdminUsersCB(action="user", user_id=user["user_id"], page=page),
         )
     builder.adjust(1)

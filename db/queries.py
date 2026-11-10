@@ -720,7 +720,7 @@ def get_user_rank(user_id: int) -> int:
 
 
 def list_users_rating_matches() -> list[tuple[int, int]]:
-    """(user_id, rating_matches) for every user — used by season-end notices."""
+    """(user_id, rating_matches) for every user - used by season-end notices."""
     with get_session() as session:
         rows = session.execute(select(User.user_id, User.rating_matches)).all()
     return [(r[0], int(r[1] or 0)) for r in rows]
@@ -749,7 +749,7 @@ def list_ranked_users() -> list[dict]:
 def soft_reset_all_ratings(center: float, k: float, rd_floor: float, vol: float) -> int:
     """Soft-reset every player's rating and restart calibration at 0/10.
 
-    Runs as a single UPDATE so the new season starts for everyone at once —
+    Runs as a single UPDATE so the new season starts for everyone at once -
     including players who never finished calibration.
     """
     with get_session() as session:

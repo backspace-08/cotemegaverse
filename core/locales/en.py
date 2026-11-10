@@ -60,7 +60,7 @@ EN = {
     "{n} дн.": "{n} d",
     "{n} ч.": "{n} h",
     "{n} мин.": "{n} min",
-    "Лига — награда — место": "League — reward — place",
+    "Лига - награда - место": "League - reward - place",
     "топ 5%": "top 5%",
     "топ 10%": "top 10%",
     "топ 30%": "top 30%",
@@ -105,7 +105,7 @@ EN = {
     "Уровень повышен до {level}/{max}!": "Level up to {level}/{max}!",
     "👑 Максимальный уровень ({level})": "👑 Max level ({level})",
     "🛒 Только в магазине": "🛒 Shop only",
-    "⬆️ Улучшить до Lv.{level} — {cost}🔮": "⬆️ Upgrade to Lv.{level} — {cost}🔮",
+    "⬆️ Улучшить до Lv.{level} - {cost}🔮": "⬆️ Upgrade to Lv.{level} - {cost}🔮",
 
     # ── Exchange ──────────────────────────────────────────────────────
     "🎴Количество круток: {spins}\n🔮Количество осколков: {shards}\n"
@@ -187,9 +187,9 @@ EN = {
     "💠 Цена: {price}🔮": "💠 Price: {price}🔮",
     "\n🔄 Обновится через {time}": "\n🔄 Refreshes in {time}",
     "{hours}ч {minutes}м": "{hours}h {minutes}m",
-    "🛒 Магазин пуст — нет карт для прокачки.": "🛒 The shop is empty — no cards to upgrade.",
-    "🔒 Магазин откроется с {count} карточек — осталось ещё {left}":
-        "🔒 The shop unlocks at {count} cards — {left} to go",
+    "🛒 Магазин пуст - нет карт для прокачки.": "🛒 The shop is empty - no cards to upgrade.",
+    "🔒 Магазин откроется с {count} карточек - осталось ещё {left}":
+        "🔒 The shop unlocks at {count} cards - {left} to go",
     "🔄 Магазин обновился": "🔄 Shop refreshed",
     "🔄 <i>Ассортимент обновился.</i>": "🔄 <i>The assortment has been refreshed.</i>",
     "✅ Уже куплено": "✅ Already purchased",
@@ -321,7 +321,7 @@ EN = {
     "🗑️ Очистить": "🗑️ Clear",
     "❌ Выбран\u00A0": "❌ Selected\u00A0",
     "✅ Выбрать\u00A0": "✅ Select\u00A0",
-    "/quit — отмена.": "/quit — cancel.",
+    "/quit - отмена.": "/quit - cancel.",
     "Введите новое название колоды (до 32 символов).":
         "Enter a new deck name (up to 32 characters).",
     "Введите название текстом.": "Enter a name as text.",
@@ -342,9 +342,9 @@ EN = {
     "Сыграйте бой, чтобы остановить снижение.":
         "<b>Arena</b>\n📉 Your rating dropped due to inactivity: {old:.0f} → {new:.0f} (−{delta:.0f}).\n"
         "Play a battle to stop the decay.",
-    "⚠️ Бот обновился — текущие бои арены отменены.\n"
+    "⚠️ Бот обновился - текущие бои арены отменены.\n"
     "Рейтинг не изменён, можно начать заново.":
-        "⚠️ The bot was updated — current arena battles are cancelled.\n"
+        "⚠️ The bot was updated - current arena battles are cancelled.\n"
         "Ratings were not changed; you can start again.",
 
     # ── Payments ─────────────────────────────────────────────────────

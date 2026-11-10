@@ -79,7 +79,7 @@ def is_admin(event: Message | CallbackQuery) -> bool:
     return event.from_user is not None and event.from_user.id == ADMIN_ID
 
 
-QUIT_HINT = "/quit — отмена."
+QUIT_HINT = "/quit - отмена."
 
 
 def _with_quit(text: str) -> str:
@@ -98,7 +98,7 @@ async def _quit_if_requested(message: Message, state: FSMContext) -> bool:
 
 
 # ──────────────────────────────────────────────
-# /users — user browser
+# /users - user browser
 # ──────────────────────────────────────────────
 
 USERS_PER_PAGE = 5
@@ -136,8 +136,8 @@ async def _user_view(user_id: int, page: int, note: str = ""):
                 page_data["items"], page_data["page"], page_data["total_pages"], start
             ),
         )
-    username = f"@{data.username}" if data.username else "—"
-    created = data.created_at.strftime("%d.%m.%Y") if data.created_at else "—"
+    username = f"@{data.username}" if data.username else "-"
+    created = data.created_at.strftime("%d.%m.%Y") if data.created_at else "-"
     text = (
         f"👤 <b>{escape(data.first_name or 'Игрок')}</b>\n"
         f"🔗 {escape(username)}\n"
@@ -383,7 +383,7 @@ async def get_id_process(message: Message, state: FSMContext) -> None:
 
 
 # ──────────────────────────────────────────────
-# /user <id> — open a player card (same view as the /users browser)
+# /user <id> - open a player card (same view as the /users browser)
 # ──────────────────────────────────────────────
 
 @router.message(Command("user"), is_admin)
@@ -435,34 +435,34 @@ async def give_char_process(message: Message, state: FSMContext, bot: Bot) -> No
 
 ADMIN_COMMANDS_TEXT = (
     "<b>🛠 Админ-команды</b>\n"
-    "/admin_commands — этот список\n"
-    "/get_id — узнать ID по @username\n"
-    "/sync_chars — синк каталога персонажей из R2 + проверка артов\n"
-    "/add_char — добавить персонажа (арт + статы) прямо через бота\n"
-    "/edit_char &lt;имя&gt; — изменить арт/имя/статы/тип/пол персонажа (по русскому имени)\n"
-    "/users — браузер игроков: карточки, выдача валюты и персонажей\n"
-    "/user &lt;id&gt; — окно конкретного игрока (то же, что в браузере)\n"
-    "/donations — неразобранные донаты (ручной зачёт/отклонение)\n"
-    "/da_auth — авторизовать DonationAlerts (токен для API)\n"
-    "/da_status — состояние токена DonationAlerts\n"
-    "/give_char — выдать себе персонажа по ID из БД\n"
-    "/give_all — выдать валюту ВСЕМ (например «500» = осколки, «500 spins», «500 super_spins»)\n"
-    "/broadcast — отправить сообщение всем игрокам\n"
-    "/clear_pvp — отменить все текущие PvP-бои (рейтинг не меняется)\n"
-    "/clear_pve — отменить все текущие PvE-бои (рейтинг не меняется)\n"
-    "/reset_bot — сброс рейтинга/переменных бота + отмена PvE-боёв\n"
-    "/reset_arena — хард-ресет рейтинга всех игроков + отмена PvP-боёв\n"
-    "/season_end — закрыть сезон арены: награды + soft reset + новый сезон\n"
-    "/full_reset — полная отчистка прогресса всех игроков\n"
-    "/cfr_stats — нагрузка CFR, рейтинг и винрейт бота\n"
-    "/cfr_selftest — проверка CFR против случайной политики\n"
-    "/test_battle — тестовый бой против AI (рейтинги не затрагиваются)\n"
+    "/admin_commands - этот список\n"
+    "/get_id - узнать ID по @username\n"
+    "/sync_chars - синк каталога персонажей из R2 + проверка артов\n"
+    "/add_char - добавить персонажа (арт + статы) прямо через бота\n"
+    "/edit_char &lt;имя&gt; - изменить арт/имя/статы/тип/пол персонажа (по русскому имени)\n"
+    "/users - браузер игроков: карточки, выдача валюты и персонажей\n"
+    "/user &lt;id&gt; - окно конкретного игрока (то же, что в браузере)\n"
+    "/donations - неразобранные донаты (ручной зачёт/отклонение)\n"
+    "/da_auth - авторизовать DonationAlerts (токен для API)\n"
+    "/da_status - состояние токена DonationAlerts\n"
+    "/give_char - выдать себе персонажа по ID из БД\n"
+    "/give_all - выдать валюту ВСЕМ (например «500» = осколки, «500 spins», «500 super_spins»)\n"
+    "/broadcast - отправить сообщение всем игрокам\n"
+    "/clear_pvp - отменить все текущие PvP-бои (рейтинг не меняется)\n"
+    "/clear_pve - отменить все текущие PvE-бои (рейтинг не меняется)\n"
+    "/reset_bot - сброс рейтинга/переменных бота + отмена PvE-боёв\n"
+    "/reset_arena - хард-ресет рейтинга всех игроков + отмена PvP-боёв\n"
+    "/season_end - закрыть сезон арены: награды + soft reset + новый сезон\n"
+    "/full_reset - полная отчистка прогресса всех игроков\n"
+    "/cfr_stats - нагрузка CFR, рейтинг и винрейт бота\n"
+    "/cfr_selftest - проверка CFR против случайной политики\n"
+    "/test_battle - тестовый бой против AI (рейтинги не затрагиваются)\n"
     "Все опасные команды требуют ввода фразы подтверждения."
 )
 
 
 # ──────────────────────────────────────────────
-# /sync_chars — pull the catalog from R2 + verify card art
+# /sync_chars - pull the catalog from R2 + verify card art
 # ──────────────────────────────────────────────
 
 async def _check_card_images(entries: list[dict]) -> list[dict]:
@@ -502,7 +502,7 @@ async def sync_chars_cmd(message: Message) -> None:
         filename, rarity = char.get("filename"), char.get("rarity")
         name = char.get("name_en", "?")
         if not filename or not rarity:
-            malformed.append(f"• {name} — нет filename/rarity")
+            malformed.append(f"• {name} - нет filename/rarity")
             continue
         path = f"{rarity}/{filename}"
         entries.append({"name": name, "path": path, "url": card_image(path)})
@@ -518,7 +518,7 @@ async def sync_chars_cmd(message: Message) -> None:
     if failures:
         lines.append(f"\n🖼 Битые/отсутствующие арты: {len(failures)}/{len(entries)}")
         for fail in failures[:20]:
-            lines.append(f"• {fail['name']} — {fail['path']} ({fail['reason']})")
+            lines.append(f"• {fail['name']} - {fail['path']} ({fail['reason']})")
         if len(failures) > 20:
             lines.append(f"… и ещё {len(failures) - 20}")
     else:
@@ -541,9 +541,9 @@ async def give_all_start(message: Message, state: FSMContext) -> None:
     await message.answer(
         _with_quit(
             "Введите сумму и валюту:\n"
-            "«500» — осколки (по умолчанию)\n"
-            "«500 spins» — крутки\n"
-            "«500 super_spins» — супер-крутки"
+            "«500» - осколки (по умолчанию)\n"
+            "«500 spins» - крутки\n"
+            "«500 super_spins» - супер-крутки"
         )
     )
 
@@ -586,7 +586,7 @@ async def give_all_amount(message: Message, state: FSMContext, bot: Bot) -> None
 async def broadcast_start(message: Message, state: FSMContext) -> None:
     await state.set_state(AdminForm.broadcast_text)
     await message.answer(
-        _with_quit("Отправьте сообщение рассылки — текст и/или прикреплённые изображения.")
+        _with_quit("Отправьте сообщение рассылки - текст и/или прикреплённые изображения.")
     )
 
 

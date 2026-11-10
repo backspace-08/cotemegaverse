@@ -311,7 +311,7 @@ class BattleLog(Base):
 
 
 class ShopPurchase(Base):
-    """A bought shop lot. Unique per (user, day, character) — blocks re-buying."""
+    """A bought shop lot. Unique per (user, day, character) - blocks re-buying."""
 
     __tablename__ = "shop_purchases"
 

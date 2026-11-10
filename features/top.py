@@ -55,7 +55,7 @@ async def _render_top(callback: CallbackQuery, bot: Bot, kind: str, lang: str) -
             for pos, name, value in data["top"]
         )
 
-    position = data.get("user_position", {}).get("position", "—")
+    position = data.get("user_position", {}).get("position", "-")
     text = t(
         lang,
         "⚡ {user}, {title}:\n➖➖➖➖➖➖\n{lines}\n➖➖➖➖➖➖\n⏺️ Твое место - {position}",

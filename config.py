@@ -17,7 +17,7 @@ CARD_IMAGES_BASE_URL = os.getenv('CARD_IMAGES_BASE_URL', '').rstrip('/') or (
     CHARACTERS_URL.rsplit('/', 1)[0] if CHARACTERS_URL else ''
 )
 
-# Запись в R2 (S3-совместимый API) — для добавления/правки персонажей через бота.
+# Запись в R2 (S3-совместимый API) - для добавления/правки персонажей через бота.
 R2_ACCOUNT_ID = os.getenv('R2_ACCOUNT_ID', '')
 R2_ACCESS_KEY_ID = os.getenv('R2_ACCESS_KEY_ID', '')
 R2_SECRET_ACCESS_KEY = os.getenv('R2_SECRET_ACCESS_KEY', '')

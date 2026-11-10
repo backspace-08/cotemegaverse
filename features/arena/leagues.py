@@ -80,14 +80,14 @@ def league_table_text(lang: str = "ru") -> str:
         (GOLD, "топ 30%"),
         (SILVER, "топ 60%"),
     ]
-    lines = [f"<blockquote>{t(lang, 'Лига — награда — место')}"]
+    lines = [f"<blockquote>{t(lang, 'Лига - награда - место')}"]
     for league, band in rows:
         lines.append(
-            f"{league.emoji} {t(lang, league.name)} — {league.shards}🔮, "
-            f"{league.spins}🎴 — {t(lang, band)}"
+            f"{league.emoji} {t(lang, league.name)} - {league.shards}🔮, "
+            f"{league.spins}🎴 - {t(lang, band)}"
         )
     lines.append(
-        f"{BRONZE.emoji} {t(lang, BRONZE.name)} — {BRONZE.shards}🔮, "
-        f"{BRONZE.spins}🎴 — {t(lang, 'остальные')}</blockquote>"
+        f"{BRONZE.emoji} {t(lang, BRONZE.name)} - {BRONZE.shards}🔮, "
+        f"{BRONZE.spins}🎴 - {t(lang, 'остальные')}</blockquote>"
     )
     return "\n".join(lines)
