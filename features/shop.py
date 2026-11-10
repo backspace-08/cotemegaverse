@@ -1,4 +1,4 @@
-"""🛒 Shop — daily rotating level-up lots for cards the player owns."""
+"""🛒 Shop - daily rotating level-up lots for cards the player owns."""
 
 from html import escape
 
@@ -69,7 +69,7 @@ async def _render(
     if not lots:
         await safe_delete_message(bot, chat_id, message_id)
         await bot.send_message(
-            chat_id, t(lang, "🛒 Магазин пуст — нет карт для прокачки."), reply_markup=shop_empty_kb(lang)
+            chat_id, t(lang, "🛒 Магазин пуст - нет карт для прокачки."), reply_markup=shop_empty_kb(lang)
         )
         return
 
@@ -95,7 +95,7 @@ async def show_shop(callback: CallbackQuery, bot: Bot, user_id: int, lang: str) 
         await callback.answer(
             t(
                 lang,
-                "🔒 Магазин откроется с {count} карточек — осталось ещё {left}",
+                "🔒 Магазин откроется с {count} карточек - осталось ещё {left}",
                 count=SHOP_MIN_CARDS,
                 left=SHOP_MIN_CARDS - owned,
             ),

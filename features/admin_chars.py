@@ -253,7 +253,7 @@ async def add_char_rarity(callback: CallbackQuery, callback_data: AdminCharCB, s
     await state.set_state(CharForm.add_media)
     await callback.message.edit_text(
         f"Редкость: {RARITY_EMOJI[callback_data.value]} {RARITY_LABELS[callback_data.value]}\n\n"
-        "Пришлите арт — лучше <b>файлом</b> (Telegram сжимает «фото»). Можно фото/видео/гиф."
+        "Пришлите арт - лучше <b>файлом</b> (Telegram сжимает «фото»). Можно фото/видео/гиф."
     )
     await callback.answer()
 
@@ -270,7 +270,7 @@ async def add_char_media(message: Message, state: FSMContext) -> None:
     await state.update_data(file_id=file_id, ext=ext, content_type=content_type)
     await state.set_state(CharForm.add_name_en)
     await message.answer(
-        _with_quit("Введите <b>английское имя</b> (<code>name_en</code>) — основа имени файла.")
+        _with_quit("Введите <b>английское имя</b> (<code>name_en</code>) - основа имени файла.")
     )
 
 
@@ -479,7 +479,7 @@ async def edit_char_value(message: Message, state: FSMContext) -> None:
         update = {"name_ru": raw}
     elif field == "type":
         if raw not in ("1", "2", "3", "4"):
-            await message.answer(_with_quit("Тип — 1, 2, 3 или 4."))
+            await message.answer(_with_quit("Тип - 1, 2, 3 или 4."))
             return
         update = {"type": int(raw)}
     elif field == "gender":

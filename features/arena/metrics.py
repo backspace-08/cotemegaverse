@@ -111,7 +111,7 @@ class CfrStats:
     def report(self, active_matches: int = 0, turn_seconds: float = 20.0) -> str:
         n_cores = cores()
         if self.count == 0 or (self.avg_cpu_ms <= 0 and self.avg_ms <= 0):
-            capacity = "• пока нет ходов бота — сыграй бой для оценки\n"
+            capacity = "• пока нет ходов бота - сыграй бой для оценки\n"
         else:
             cpu_ms = self.avg_cpu_ms or self.avg_ms
             # A solve occupies one core for `cpu_ms`; one PvE game spends one
@@ -123,7 +123,7 @@ class CfrStats:
                 f"• с запасом ×2: ~{saturated / 2.0:.0f} игр\n"
             )
         return (
-            "🤖 <b>CFR — нагрузка</b>\n"
+            "🤖 <b>CFR - нагрузка</b>\n"
             f"Ядер: {n_cores}\n"
             f"Ходов бота всего: {self.count}\n"
             f"Время на ход: avg {self.avg_ms:.0f}мс | p95 {_percentile(list(self.latencies), 95):.0f}мс | max {self.max_ms:.0f}мс\n"

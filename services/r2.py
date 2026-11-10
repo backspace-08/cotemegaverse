@@ -1,7 +1,7 @@
 """Cloudflare R2 access via the S3-compatible API.
 
 Reading the catalog and card images happens over public URLs (config.card_image),
-so this module is only needed for *writing* — adding/editing characters through
+so this module is only needed for *writing* - adding/editing characters through
 the bot. The S3 client is synchronous; call these from a thread (run_db).
 """
 
@@ -103,7 +103,7 @@ def save_catalog(data: dict, backup: bool = True) -> None:
             stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
             put_bytes(f"_history/characters.{stamp}.json", previous, "application/json", cache_control=NO_CACHE)
         except Exception:  # noqa: BLE001
-            pass  # first write / catalog missing — nothing to back up
+            pass  # first write / catalog missing - nothing to back up
 
     payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
     put_bytes(CATALOG_KEY, payload, "application/json", cache_control=NO_CACHE)

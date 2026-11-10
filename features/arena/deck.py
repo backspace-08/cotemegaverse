@@ -1,4 +1,4 @@
-"""Arena decks: up to 3 named decks, one is the main (active) — switched inline."""
+"""Arena decks: up to 3 named decks, one is the main (active) - switched inline."""
 
 from html import escape
 

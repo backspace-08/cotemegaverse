@@ -18,6 +18,7 @@ def setup_dispatcher() -> None:
     from features import (
         admin,
         admin_chars,
+        admin_donations,
         arena,
         characters,
         donate,
@@ -29,5 +30,8 @@ def setup_dispatcher() -> None:
         top,
     )
 
-    for module in (menu, gacha, characters, profile, top, exchange, donate, shop, admin, admin_chars, arena):
+    for module in (
+        menu, gacha, characters, profile, top, exchange, donate, shop,
+        admin, admin_chars, admin_donations, arena,
+    ):
         dp.include_router(module.router)

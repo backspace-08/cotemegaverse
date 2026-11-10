@@ -60,7 +60,7 @@ EN = {
     "{n} дн.": "{n} d",
     "{n} ч.": "{n} h",
     "{n} мин.": "{n} min",
-    "Лига — награда — место": "League — reward — place",
+    "Лига - награда - место": "League - reward - place",
     "топ 5%": "top 5%",
     "топ 10%": "top 10%",
     "топ 30%": "top 30%",
@@ -105,7 +105,7 @@ EN = {
     "Уровень повышен до {level}/{max}!": "Level up to {level}/{max}!",
     "👑 Максимальный уровень ({level})": "👑 Max level ({level})",
     "🛒 Только в магазине": "🛒 Shop only",
-    "⬆️ Улучшить до Lv.{level} — {cost}🔮": "⬆️ Upgrade to Lv.{level} — {cost}🔮",
+    "⬆️ Улучшить до Lv.{level} - {cost}🔮": "⬆️ Upgrade to Lv.{level} - {cost}🔮",
 
     # ── Exchange ──────────────────────────────────────────────────────
     "🎴Количество круток: {spins}\n🔮Количество осколков: {shards}\n"
@@ -140,6 +140,44 @@ EN = {
         "🔮 {shards} shards for {amount}{currency}\n\nTap «Pay» to open the payment system.",
     "🇷🇺 Рубли": "🇷🇺 Rubles",
     "🇺🇸 Доллары": "🇺🇸 Dollars",
+    "🇪🇺 Евро": "🇪🇺 Euro",
+    "💸 <b>Донат</b>\n\nВыбери валюту. Оплатить нужно ровно в той же валюте, "
+    "которую выберешь здесь.":
+        "💸 <b>Donate</b>\n\nChoose a currency. You must pay in exactly the same "
+        "currency you pick here.",
+    "💸 <b>Донат</b> · {currency}\n\nВыбери количество:":
+        "💸 <b>Donate</b> · {currency}\n\nChoose the amount:",
+    "💳 <b>Платёжная заявка</b>\n\n"
+    "{shards}🔮 за <code>{number}</code> {symbol}\n"
+    "Действует ещё {left}.\n\n"
+    "На странице доната:\n"
+    "1) валюта - {currency};\n"
+    "2) сумма - <code>{number}</code>.\n\n"
+    "⚠️ Другая валюта или сумма - платёж уйдёт на ручную проверку.":
+        "💳 <b>Payment order</b>\n\n"
+        "{shards}🔮 for <code>{number}</code> {symbol}\n"
+        "Valid for another {left}.\n\n"
+        "On the donation page:\n"
+        "1) currency - {currency};\n"
+        "2) amount - <code>{number}</code>.\n\n"
+        "⚠️ A different currency or amount goes to manual review.",
+    "{hours} ч {minutes} мин": "{hours} h {minutes} min",
+    "{minutes} мин": "{minutes} min",
+    "Сейчас нет свободных сумм, попробуй через пару минут":
+        "No free amounts right now, try again in a couple of minutes",
+    "Неизвестный вариант": "Unknown option",
+    "Заявка отменена": "Order cancelled",
+    "Заявка отменена. Если платёж уже в пути, он всё равно зачтётся.":
+        "Order cancelled. If the payment is already on its way, it will still be credited.",
+    "Не найдено": "Not found",
+    "✅ Зачтено: +{shards}🔮": "✅ Credited: +{shards}🔮",
+    "Этот платёж уже разобран": "This payment is already resolved",
+    "🌐 Открыть страницу доната": "🌐 Open the donation page",
+    "❌ Отменить заявку": "❌ Cancel the order",
+    "✅ Это мой платёж": "✅ It's my payment",
+    "✅ Донат получен: {amount} → +{shards}🔮": "✅ Donation received: {amount} → +{shards}🔮",
+    "💸 Пришёл платёж на {amount}. Это твой? Подтверди, чтобы зачесть.":
+        "💸 A payment of {amount} arrived. Is it yours? Confirm to get credited.",
     "↩️ К валютам": "↩️ Currencies",
     "{flag} <b>{currency}</b>\n\n<blockquote>{prices}</blockquote>\n\nНажмите на сумму для оплаты.":
         "{flag} <b>{currency}</b>\n\n<blockquote>{prices}</blockquote>\n\nTap an amount to pay.",
@@ -149,9 +187,9 @@ EN = {
     "💠 Цена: {price}🔮": "💠 Price: {price}🔮",
     "\n🔄 Обновится через {time}": "\n🔄 Refreshes in {time}",
     "{hours}ч {minutes}м": "{hours}h {minutes}m",
-    "🛒 Магазин пуст — нет карт для прокачки.": "🛒 The shop is empty — no cards to upgrade.",
-    "🔒 Магазин откроется с {count} карточек — осталось ещё {left}":
-        "🔒 The shop unlocks at {count} cards — {left} to go",
+    "🛒 Магазин пуст - нет карт для прокачки.": "🛒 The shop is empty - no cards to upgrade.",
+    "🔒 Магазин откроется с {count} карточек - осталось ещё {left}":
+        "🔒 The shop unlocks at {count} cards - {left} to go",
     "🔄 Магазин обновился": "🔄 Shop refreshed",
     "🔄 <i>Ассортимент обновился.</i>": "🔄 <i>The assortment has been refreshed.</i>",
     "✅ Уже куплено": "✅ Already purchased",
@@ -283,7 +321,7 @@ EN = {
     "🗑️ Очистить": "🗑️ Clear",
     "❌ Выбран\u00A0": "❌ Selected\u00A0",
     "✅ Выбрать\u00A0": "✅ Select\u00A0",
-    "/quit — отмена.": "/quit — cancel.",
+    "/quit - отмена.": "/quit - cancel.",
     "Введите новое название колоды (до 32 символов).":
         "Enter a new deck name (up to 32 characters).",
     "Введите название текстом.": "Enter a name as text.",
@@ -304,9 +342,9 @@ EN = {
     "Сыграйте бой, чтобы остановить снижение.":
         "<b>Arena</b>\n📉 Your rating dropped due to inactivity: {old:.0f} → {new:.0f} (−{delta:.0f}).\n"
         "Play a battle to stop the decay.",
-    "⚠️ Бот обновился — текущие бои арены отменены.\n"
+    "⚠️ Бот обновился - текущие бои арены отменены.\n"
     "Рейтинг не изменён, можно начать заново.":
-        "⚠️ The bot was updated — current arena battles are cancelled.\n"
+        "⚠️ The bot was updated - current arena battles are cancelled.\n"
         "Ratings were not changed; you can start again.",
 
     # ── Payments ─────────────────────────────────────────────────────

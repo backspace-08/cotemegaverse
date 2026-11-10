@@ -1,7 +1,7 @@
 """Shop: daily rotating level-up lots for cards the player already owns.
 
 Each player rolls their own rarities for the day (seeded per user+day) and the
-resulting lots — both the card and the rarity — are frozen in `shop_rotation`
+resulting lots - both the card and the rarity - are frozen in `shop_rotation`
 on the first view, so nothing shifts until the reset hour. Buying is keyed by
 (user, day, char_id) so a lot can't be bought twice.
 """
@@ -192,7 +192,7 @@ def buy(user_id: int, day: int, char_id: int) -> BuyResult:
             )
         )
         try:
-            session.flush()  # unique (user, day, char_id) — blocks a double buy
+            session.flush()  # unique (user, day, char_id) - blocks a double buy
         except IntegrityError:
             session.rollback()
             return BuyResult(status="purchased")

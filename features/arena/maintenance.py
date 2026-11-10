@@ -30,7 +30,7 @@ async def reset_active_matches(bot=None, only: str | None = None, notify: bool =
                             uid,
                             t(
                                 lang,
-                                "⚠️ Бот обновился — текущие бои арены отменены.\n"
+                                "⚠️ Бот обновился - текущие бои арены отменены.\n"
                                 "Рейтинг не изменён, можно начать заново.",
                             ),
                         )
