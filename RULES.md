@@ -1,212 +1,218 @@
-# COTE Megaverse — Game Rules
+# COTE Megaverse — Правила игры
 
-Self-contained, exact rules of the game. Read this only and you can play,
-understand what is visible vs hidden, and how everything gets revealed.
+Самодостаточные и точные правила игры. Прочитав только их, можно играть,
+понимать, что видно, а что скрыто, и как всё раскрывается.
 
-## 1. Overview
+## 1. Обзор
 
-Two players, each with a team of **3 characters**. Players alternate turns.
-Goal: kill **all 3** of the opponent's characters. First to do so wins.
+Два игрока, у каждого команда из **3 персонажей**. Игроки ходят по очереди.
+Цель — убить **всех 3** персонажей соперника. Кто сделает это первым, тот
+победил.
 
-- `turn` counts **half-turns** (each player's move): turn 1 = first player,
-  turn 2 = second player, turn 3 = first player, etc.
-- Who moves first is a match parameter (benchmarks alternate seats).
+- `turn` считает **полуходы** (ход каждого игрока): ход 1 — первый игрок,
+  ход 2 — второй, ход 3 — снова первый и так далее.
+- Кто ходит первым — параметр матча (в бенчмарках места чередуются).
 
-## 2. Characters
+## 2. Персонажи
 
-Each character has:
-- **Type** `A`, `B`, `C`, or `D` (duplicates allowed).
-- **ATK** (attack strength), **HP** (current health), **max_hp** (initial HP).
+У каждого персонажа есть:
+- **Тип** `A`, `B`, `C` или `D` (повторы разрешены).
+- **ATK** (сила атаки), **HP** (текущее здоровье), **max_hp** (стартовое HP).
 
-**Global stat ranges:** HP 3000–10000 (step 100), ATK 1000–3500 (step 100).
-Any value in these ranges is valid in the game.
+**Глобальные диапазоны статов:** HP 3000–10000 (шаг 100), ATK 1000–3500 (шаг 100).
+Любое значение из этих диапазонов допустимо в игре.
 
-> The shipped code defaults to a narrower benchmark subset (HP 5700–6300,
-> ATK 1900/2000/2100). Those are simply sampled values from within the global
-> range, chosen to keep test suites small — they are not a game limit.
+> В поставляемом коде по умолчанию используется более узкий набор для
+> бенчмарков (HP 5700–6300, ATK 1900/2000/2100). Это просто выборочные значения
+> из глобального диапазона, выбранные, чтобы тесты оставались небольшими; это
+> не ограничение игры.
 
-All stats of all characters are **public**: types, ATK, current HP, max_hp, and
-their full history.
+Все статы всех персонажей **публичны**: типы, ATK, текущее HP, max_hp и вся их
+история.
 
-### Type multiplier
+### Множитель типа
 
-Strength cycle: **A → B → C → D → A** (A beats B, B beats C, C beats D, D beats A).
+Цикл силы: **A → B → C → D → A** (A бьёт B, B бьёт C, C бьёт D, D бьёт A).
 
-Attacker type X vs defender type Y:
-- **×1.3** if X is stronger than Y (X is the next type after Y in the cycle);
-- **×0.7** if X is weaker than Y (Y is the next type after X in the cycle);
-- **×1.0** otherwise — identical types, or types two steps apart in the cycle
-  (e.g. A vs C, B vs D).
+Атакующий типа X против защитника типа Y:
+- **×1.3**, если X сильнее Y (X — следующий тип после Y в цикле);
+- **×0.7**, если X слабее Y (Y — следующий тип после X в цикле);
+- **×1.0** в остальных случаях — одинаковые типы или типы через один в цикле
+  (например, A против C, B против D).
 
-Every distinct pair of types falls into exactly one of these three cases.
+Каждая различная пара типов попадает ровно в один из этих трёх случаев.
 
-### Damage
+### Урон
 
-Each hit deals damage rounded to the nearest 100; the turn's total is the sum
-over hits:
+Каждый удар наносит урон, округлённый до ближайшей сотни; урон за ход — сумма
+по ударам:
 
 ```
 per_hit = round(ATK × multiplier / 100) × 100
 damage  = per_hit × hits
 ```
 
-`round()` is Python's: round half to even (`round(2.5) = 2`, `round(3.5) = 4`).
-Per-hit damage is always a multiple of 100. 0 hits → 0 damage.
+`round()` — питоновский: округление половины к чётному (`round(2.5) = 2`,
+`round(3.5) = 4`). Урон за удар всегда кратен 100. 0 ударов → 0 урона.
 
-## 3. Action budget
+## 3. Бюджет действий
 
-Each turn a player gets an **action budget** that must be spent **fully**
-(no leftover actions allowed). An allocation that does not spend the whole
-budget is invalid and rejected.
+Каждый ход игрок получает **бюджет действий**, который нужно потратить
+**полностью** (остаток не допускается). Распределение, не тратящее весь
+бюджет, недопустимо и отклоняется.
 
-**Base budget** by `turn`:
+**Базовый бюджет** по `turn`:
 
-| turn | base budget |
-|------|-------------|
-| 1    | 1           |
-| 2–4  | 2           |
-| 5–6  | 3           |
-| 7+   | 4           |
+| ход | базовый бюджет |
+|------|----------------|
+| 1    | 1              |
+| 2–4  | 2              |
+| 5–6  | 3              |
+| 7+   | 4              |
 
-Bank is added to the base:
+Банк добавляется к базовому:
 
 ```
 budget = base(turn) + bank
 ```
 
-Budget never exceeds **8**. Bank is capped at **4**.
+Бюджет никогда не превышает **8**. Банк ограничен **4**.
 
-## 4. Actions
+## 4. Действия
 
-The budget is split among:
+Бюджет распределяется между:
 
-1. **Attack** (attacks) — damage to the opponent's **active** character (the one
-   currently in front of you). You can never target a bench character further in
-   the stack, and never a dead character — only the active one is attackable.
-2. **Shields** (defends) — see "Shields".
-3. **Bank** (bonuses) — see "Bank".
-4. **Switch** — change your active character.
+1. **Атака** (attacks) — урон **активному** персонажу соперника (тому, кто
+   сейчас стоит впереди). Целиться в персонажа на скамейке глубже в стеке
+   нельзя, как и в мёртвого: атаковать можно только активного.
+2. **Щиты** (defends) — см. «Щиты».
+3. **Банк** (bonuses) — см. «Банк».
+4. **Смена** — смена активного персонажа.
 
-`attacks + shields + bank` must equal the budget (minus 1 if a switch was made).
-Any of the three can be 0 — a turn may be spent entirely on shields and/or bank,
-with no attacks.
+`attacks + shields + bank` должно равняться бюджету (минус 1, если была смена).
+Любое из трёх может быть 0 — ход можно потратить целиком на щиты и/или банк,
+без атак.
 
-### Switch
+### Смена
 
-- Costs **1 action**.
-- At most **one switch per turn** (cannot switch back in the same turn).
-- Only to a **living** own character, and **not** to the already-active one.
-- The switched-to character becomes first in the team's stack order; the rest
-  keep their relative order.
-- The switch takes effect **before** the turn's attacks: if you switch, your
-  attacks that turn use the new active character's ATK and type.
+- Стоит **1 действие**.
+- Не больше **одной смены за ход** (вернуться в том же ходу нельзя).
+- Только на **живого** своего персонажа и **не** на уже активного.
+- Персонаж, на которого сменились, становится первым в порядке стека команды;
+  остальные сохраняют относительный порядок.
+- Смена срабатывает **до** атак хода: если игрок сменился, его атаки в этот ход
+  используют ATK и тип нового активного персонажа.
 
-Example: with budget 8, spend 1 action on a switch and 7 on anything else.
+Пример: при бюджете 8 потратить 1 действие на смену и 7 на что угодно ещё.
 
-### Promotion on death
+### Повышение при смерти
 
-If the active character dies, the first living character in the stack order
-becomes active **for free** (no action cost). The promoted character becomes
-first in the stack order; the rest keep their relative order. The initial stack
-order is the team's listing order, active first.
+Если активный персонаж умирает, первый живой в порядке стека становится
+активным **бесплатно** (без затрат действий). Повышенный персонаж становится
+первым в порядке стека; остальные сохраняют относительный порядок. Изначальный
+порядок стека — порядок перечисления команды, активный первым.
 
-Promotion is **not** a switch: it does not cost an action and does not consume
-the one-switch-per-turn allowance.
+Повышение — **не** смена: оно не стоит действия и не расходует лимит одной
+смены за ход.
 
-## 5. Shields
+## 5. Щиты
 
-- Shields placed on turn N block attacks on the **opponent's next turn** (N+1).
-- One-to-one: `blocked = min(attacks, shields)`.
-- After turn N+1 the shields **burn** — whether or not they blocked anything,
-  even if no attack was made.
-- Only the latest placement is active: shields do **not** stack across turns
-  (the previous set is always burned before the new one matters).
+- Щиты, поставленные на ходу N, блокируют атаки на **следующем ходу**
+  соперника (N+1).
+- Один к одному: `blocked = min(attacks, shields)`.
+- После хода N+1 щиты **сгорают** — независимо от того, заблокировали ли они
+  что-то, даже если атаки не было.
+- Активна только последняя установка: щиты **не** складываются между ходами
+  (предыдущий набор всегда сгорает до того, как новый начнёт что-то значить).
 
-## 6. Bank
+## 6. Банк
 
-- Bank is a hidden reserve that increases your budget on your **next** own turn.
-- On that turn the bank is fully spent: `budget = base + bank`.
-- Bank cap 4; total budget cap 8.
+- Банк — скрытый резерв, который увеличивает бюджет на **следующем** собственном
+  ходу.
+- На этом ходу банк тратится полностью: `budget = base + bank`.
+- Потолок банка 4; потолок общего бюджета 8.
 
-## 7. Attack resolution
+## 7. Разрешение атаки
 
-When a player attacks:
-1. Shields block: `blocked = min(attacks, shields)`.
+Когда игрок атакует:
+1. Щиты блокируют: `blocked = min(attacks, shields)`.
 2. `hits = attacks − blocked`.
-3. Damage to the opponent's active character:
-   `round(ATK × multiplier / 100) × 100` per hit, `hits` times.
-4. HP drops; if HP ≤ 0 the character dies.
-5. If the active character died, the next living one is promoted for free.
+3. Урон активному персонажу соперника:
+   `round(ATK × multiplier / 100) × 100` за удар, `hits` раз.
+4. HP снижается; если HP ≤ 0, персонаж умирает.
+5. Если активный персонаж умер, следующий живой повышается бесплатно.
 
-All attacks of a turn resolve in **one batch** against the defender's active
-character at that moment. If that character dies, the promoted character is
-**not** attacked this turn — the resolution is finished and the turn ends.
+Все атаки хода разрешаются **одним пакетом** по активному персонажу защитника
+на тот момент. Если этот персонаж умирает, повышенный персонаж в этот ход
+**не** атакуется — разрешение закончено, ход завершён.
 
-Only the defender can take damage on a turn; the attacker's own characters are
-untouched by their attack. Both sides can therefore never die simultaneously.
+Урон на ходу может получить только защитник; собственные персонажи атакующего
+от его атаки не страдают. Поэтому обе стороны не могут умереть одновременно.
 
-## 8. What is visible and what is hidden
+## 8. Что видно, а что скрыто
 
-### Always public
+### Всегда публично
 
-- Turn number.
-- Types, ATK, current HP, max_hp of all characters on both sides — current
-  values and full history.
-- The opponent's budgets of **completed** turns, their attack counts, their switches.
-- Outcomes of all resolutions (hits landed, shields spent against you).
+- Номер хода.
+- Типы, ATK, текущее HP, max_hp всех персонажей обеих сторон — текущие
+  значения и вся история.
+- Бюджеты соперника за **завершённые** ходы, количество его атак, его смены.
+- Итоги всех разрешений (попавшие удары, щиты, потраченные против тебя).
 
-### Hidden — only at the moment you act
+### Скрыто — только в момент действия
 
-When it is your turn you **do not know** the opponent's latest placement:
+Когда наступает твой ход, ты **не знаешь** последнюю установку соперника:
 
-- how many **shields** they currently hold (they will block your attack this turn);
-- how much **bank** they put (it will increase their next budget).
+- сколько у него сейчас **щитов** (они заблокируют твою атаку в этот ход);
+- сколько **банка** он поставил (это увеличит его следующий бюджет).
 
-Only their **sum** is known:
+Известна только их **сумма**:
 
 ```
 R = opponent_budget − opponent_attacks − opponent_switch
 ```
 
-### Reveal — always and exactly
+### Раскрытие — всегда и точно
 
-- **Bank** placed on turn N becomes public on turn N+2 (when the opponent moves
-  again and their budget is shown). Always revealed, even if it was 0:
-  `bank = budget − base`.
-- **Shields** become public after they fire/burn — on your turn after the
-  resolution. Always revealed, exactly: even if you did not attack, the
-  opponent's spent shields are shown.
+- **Банк**, поставленный на ходу N, становится публичным на ходу N+2 (когда
+  соперник снова ходит и показывается его бюджет). Раскрывается всегда, даже
+  если он был 0: `bank = budget − base`.
+- **Щиты** становятся публичными после того, как сработают/сгорят — на твоём
+  ходу после разрешения. Раскрываются всегда и точно: даже если ты не атаковал,
+  потраченные щиты соперника показываются.
 
-Because R and the spent shields are both public, the bank is in fact inferable
-one turn earlier than N+2: `bank = R − spent_shields`.
+Поскольку R и потраченные щиты публичны, банк на самом деле выводится на ход
+раньше, чем N+2: `bank = R − spent_shields`.
 
-### Conclusion
+### Вывод
 
-Exactly one value is hidden at any decision point — the opponent's latest
-(shields, bank) placement; only its sum is known. Everything else is fully
-public.
+В любой точке решения скрыто ровно одно значение — последняя установка
+соперника (щиты, банк); известна только её сумма. Всё остальное полностью
+публично.
 
-## 9. End of match
+## 9. Конец матча
 
-- The match ends when a side has no living characters left — the other side wins.
-- There is **no built-in draw** and **no turn limit** by the rules. The game is
-  designed to end in a kill.
-- **The game is decisive under optimal play** — two sides each trying to win end
-  the match in a kill. The mechanical reason:
-  - Shield count is capped by your budget. At the base budget (4) you can place
-    at most **4 shields**; 8 shields require a full bank (4), which itself takes
-    turns to build up.
-  - 8 shields are **not sustainable**: spending your whole budget on shields
-    resets your bank to 0, so your next turn has only 4 actions — at most 4
-    shields. To shield 8 again you must re-bank, and while banking you are back
-    to at most 4 shields.
-  - So a defender cannot block everything every turn: a banked burst of more
-    than 4 hits always lands at least `attacks − 4` hits against a non-banked
-    defender, and a defender who is banking is vulnerable in the meantime.
-- A draw is mechanically possible only if both players deliberately refuse to
-  attack (spending every turn on shields and/or bank) — such a line never deals
-  damage and never wins, so it is never optimal. A draw therefore signals
-  suboptimal or buggy play and is suspicious.
-- Computational environments (bots, tests) may impose a technical turn limit to
-  bound runtime. If a draw appears under such a limit, it should be
-  investigated.
+- Матч заканчивается, когда у одной стороны не остаётся живых персонажей —
+  побеждает другая сторона.
+- В правилах **нет** встроенной ничьей и **нет** лимита ходов. Игра рассчитана
+  на завершение убийством.
+- **При оптимальной игре партия решается** — две стороны, каждая из которых
+  пытается выиграть, заканчивают матч убийством. Механическая причина:
+  - Количество щитов ограничено бюджетом. При базовом бюджете (4) можно
+    поставить не больше **4 щитов**; 8 щитов требуют полного банка (4), который
+    сам требует ходов на накопление.
+  - 8 щитов **не поддерживаются**: потратив весь бюджет на щиты, игрок обнуляет
+    банк, поэтому на следующем ходу у него только 4 действия — максимум 4 щита.
+    Чтобы снова закрыть 8, нужно снова копить, а пока копишь, снова доступно не
+    больше 4 щитов.
+  - Значит, защитник не может блокировать всё каждый ход: запасённый залп
+    больше 4 ударов всегда попадает минимум `attacks − 4` ударами по защитнику
+    без банка, а защитник, который копит, в это время уязвим.
+- Ничья механически возможна, только если оба игрока сознательно отказываются
+  атаковать (тратят каждый ход на щиты и/или банк) — такая линия никогда не
+  наносит урона и никогда не выигрывает, поэтому она никогда не оптимальна.
+  Ничья поэтому сигнализирует о субоптимальной или багованной игре и
+  подозрительна.
+- Вычислительные окружения (боты, тесты) могут вводить технический лимит ходов,
+  чтобы ограничить время работы. Если при таком лимите появляется ничья, это
+  стоит расследовать.
