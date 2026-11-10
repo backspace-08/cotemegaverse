@@ -382,6 +382,7 @@ class DonationOrder(Base):
     match_until = Column(TIMESTAMP, nullable=False)
     paid_at = Column(TIMESTAMP)
     donation_id = Column(BigInteger)
+    message_id = Column(BigInteger)  # the order message to delete on success
 
     __table_args__ = (
         Index("ix_donation_orders_lookup", "currency", "amount_minor", "status"),
