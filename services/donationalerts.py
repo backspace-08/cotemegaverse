@@ -30,7 +30,7 @@ from core.i18n import t
 from core.logger import logger
 from core.utils import run_db
 from db.models import DonationToken
-from db.queries import get_user_lang
+from db.queries import get_user_data, get_user_lang
 from db.session import get_session
 from services.donations import fmt_minor, match_donation
 
@@ -219,6 +219,26 @@ async def _send(bot, chat_id: int, text: str, reply_markup=None) -> None:
         logger.error(f"DonationAlerts: cannot message {chat_id}: {e}")
 
 
+async def notify_admin_credit(bot, result: dict, donor: str | None = None) -> None:
+    """Tell the admin about a credited donation."""
+    user = await run_db(get_user_data, result["user_id"])
+    if user is None:
+        who = str(result["user_id"])
+    elif user.username:
+        who = f"@{user.username}"
+    else:
+        who = user.first_name or str(result["user_id"])
+    text = (
+        f"💸 Донат зачтён: {fmt_minor(result['currency'], result['amount_minor'])} "
+        f"→ +{result['shards']}🔮\n"
+        f"👤 {who} (id {result['user_id']})\n"
+        f"🆔 заявка #{result['order_id']} · {result.get('flag') or 'exact'}"
+    )
+    if donor:
+        text += f"\nПлательщик: {donor}"
+    await _send(bot, ADMIN_ID, text)
+
+
 async def _process(bot, item: dict) -> None:
     from core.keyboards import donation_claim_kb
 
@@ -244,12 +264,18 @@ async def _process(bot, item: dict) -> None:
     status = result.get("status")
 
     if status == "matched":
+        if result.get("message_id"):
+            try:
+                await bot.delete_message(result["user_id"], result["message_id"])
+            except Exception as e:  # noqa: BLE001
+                logger.info(f"DonationAlerts: cannot delete the order message: {e}")
         lang = await run_db(get_user_lang, result["user_id"]) or "ru"
         await _send(
             bot,
             result["user_id"],
             t(lang, "✅ Донат получен: {amount} → +{shards}🔮", amount=amount, shards=result["shards"]),
         )
+        await notify_admin_credit(bot, result, item.get("username"))
         logger.info(
             f"DonationAlerts: donation {provider_id} matched to user {result['user_id']} "
             f"({amount}, +{result['shards']} shards, flag={result.get('flag') or 'exact'})"

@@ -61,6 +61,7 @@ def _order_dict(order: DonationOrder) -> dict:
         "shards": order.shards,
         "status": order.status,
         "match_until": order.match_until,
+        "message_id": order.message_id,
     }
 
 
@@ -187,6 +188,13 @@ def create_order(user_id: int, currency: str, base_minor: int) -> dict | None:
         return _order_dict(order)
 
 
+def set_order_message(order_id: int, message_id: int) -> None:
+    with get_session() as session:
+        order = session.get(DonationOrder, order_id)
+        if order is not None:
+            order.message_id = message_id
+
+
 def active_order(user_id: int) -> dict | None:
     now = utcnow()
     with get_session() as session:
@@ -275,6 +283,7 @@ def _credit(session, donation: Donation, order: DonationOrder, flag: str = "") -
         "amount_minor": donation.amount_minor,
         "currency": donation.currency,
         "flag": flag,
+        "message_id": order.message_id,
     }
 
 

@@ -108,11 +108,12 @@ async def create_pack(
         f"{order['shards']} shards for {donations.fmt_minor(currency, order['amount_minor'])}"
     )
     await safe_delete_message(bot, callback.message.chat.id, callback.message.message_id)
-    await bot.send_message(
+    sent = await bot.send_message(
         callback.message.chat.id,
         _order_text(order, lang),
         reply_markup=donation_order_kb(lang, order["id"], DONATION_PAGE_URL),
     )
+    await run_db(donations.set_order_message, order["id"], sent.message_id)
     await callback.answer()
 
 
@@ -141,7 +142,7 @@ async def cancel_order(
 
 @router.callback_query(DonateClaimCB.filter())
 async def claim_payment(
-    callback: CallbackQuery, callback_data: DonateClaimCB, user_id: int, lang: str
+    callback: CallbackQuery, callback_data: DonateClaimCB, bot: Bot, user_id: int, lang: str
 ) -> None:
     result = await run_db(
         donations.claim_ambiguous,
@@ -150,6 +151,14 @@ async def claim_payment(
         user_id,
     )
     if result.get("status") == "matched":
+        if result.get("message_id"):
+            try:
+                await bot.delete_message(user_id, result["message_id"])
+            except Exception:  # noqa: BLE001
+                pass
+        from services.donationalerts import notify_admin_credit
+
+        await notify_admin_credit(bot, result)
         await callback.answer(
             t(lang, "✅ Зачтено: +{shards}🔮", shards=result["shards"]), show_alert=True
         )
