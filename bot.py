@@ -68,6 +68,10 @@ async def main() -> None:
 
     asyncio.create_task(_season_watcher(bot))
 
+    from services.donationalerts import poll_forever
+
+    asyncio.create_task(poll_forever(bot))
+
     if WEBHOOK_URL:
         logger.info(f"Starting in webhook mode: {WEBHOOK_URL}")
         await bot.set_webhook(WEBHOOK_URL)

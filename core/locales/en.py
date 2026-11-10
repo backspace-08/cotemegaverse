@@ -140,6 +140,44 @@ EN = {
         "🔮 {shards} shards for {amount}{currency}\n\nTap «Pay» to open the payment system.",
     "🇷🇺 Рубли": "🇷🇺 Rubles",
     "🇺🇸 Доллары": "🇺🇸 Dollars",
+    "🇪🇺 Евро": "🇪🇺 Euro",
+    "💸 <b>Донат</b>\n\nВыбери валюту. Оплатить нужно ровно в той же валюте, "
+    "которую выберешь здесь.":
+        "💸 <b>Donate</b>\n\nChoose a currency. You must pay in exactly the same "
+        "currency you pick here.",
+    "💸 <b>Донат</b> · {currency}\n\nВыбери количество:":
+        "💸 <b>Donate</b> · {currency}\n\nChoose the amount:",
+    "💳 <b>Платёжная заявка</b>\n\n"
+    "{shards}🔮 за <code>{number}</code> {symbol}\n"
+    "Действует ещё {left}.\n\n"
+    "На странице доната:\n"
+    "1) валюта - {currency};\n"
+    "2) сумма - <code>{number}</code>.\n\n"
+    "⚠️ Другая валюта или сумма - платёж уйдёт на ручную проверку.":
+        "💳 <b>Payment order</b>\n\n"
+        "{shards}🔮 for <code>{number}</code> {symbol}\n"
+        "Valid for another {left}.\n\n"
+        "On the donation page:\n"
+        "1) currency - {currency};\n"
+        "2) amount - <code>{number}</code>.\n\n"
+        "⚠️ A different currency or amount goes to manual review.",
+    "{hours} ч {minutes} мин": "{hours} h {minutes} min",
+    "{minutes} мин": "{minutes} min",
+    "Сейчас нет свободных сумм, попробуй через пару минут":
+        "No free amounts right now, try again in a couple of minutes",
+    "Неизвестный вариант": "Unknown option",
+    "Заявка отменена": "Order cancelled",
+    "Заявка отменена. Если платёж уже в пути, он всё равно зачтётся.":
+        "Order cancelled. If the payment is already on its way, it will still be credited.",
+    "Не найдено": "Not found",
+    "✅ Зачтено: +{shards}🔮": "✅ Credited: +{shards}🔮",
+    "Этот платёж уже разобран": "This payment is already resolved",
+    "🌐 Открыть страницу доната": "🌐 Open the donation page",
+    "❌ Отменить заявку": "❌ Cancel the order",
+    "✅ Это мой платёж": "✅ It's my payment",
+    "✅ Донат получен: {amount} → +{shards}🔮": "✅ Donation received: {amount} → +{shards}🔮",
+    "💸 Пришёл платёж на {amount}. Это твой? Подтверди, чтобы зачесть.":
+        "💸 A payment of {amount} arrived. Is it yours? Confirm to get credited.",
     "↩️ К валютам": "↩️ Currencies",
     "{flag} <b>{currency}</b>\n\n<blockquote>{prices}</blockquote>\n\nНажмите на сумму для оплаты.":
         "{flag} <b>{currency}</b>\n\n<blockquote>{prices}</blockquote>\n\nTap an amount to pay.",

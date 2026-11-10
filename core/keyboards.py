@@ -4,10 +4,11 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from config import MAX_CHARACTER_LEVEL
 from core.callbacks import (
+    AdminDonateCB,
     AdminUsersCB,
-    BuyCB,
     CharPageCB,
     DonateCB,
+    DonateClaimCB,
     ExchangeCB,
     GachaCB,
     LangCB,
@@ -174,28 +175,92 @@ def exchange_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def donate_currencies_kb(lang: str = "ru") -> InlineKeyboardMarkup:
+def donation_currency_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.button(text=t(lang, "🇷🇺 Рубли"), callback_data=DonateCB(currency="RUB"))
-    builder.button(text=t(lang, "🇺🇸 Доллары"), callback_data=DonateCB(currency="USD"))
+    builder.button(text=t(lang, "🇷🇺 Рубли"), callback_data=DonateCB(action="packs", value="RUB"))
+    builder.button(text=t(lang, "🇺🇸 Доллары"), callback_data=DonateCB(action="packs", value="USD"))
+    builder.button(text=t(lang, "🇪🇺 Евро"), callback_data=DonateCB(action="packs", value="EUR"))
     builder.button(text=t(lang, "↩️ В меню"), callback_data=MenuCB(action="main"))
     builder.adjust(1)
     return builder.as_markup()
 
 
-def donate_prices_kb(
-    currency: str, price_dict: dict, symbol: str, lang: str = "ru"
-) -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    for amount, shards in price_dict.items():
-        builder.button(
-            text=f"{amount}{symbol} - {shards}🔮",
-            callback_data=BuyCB(currency=currency, amount=str(amount), shards=shards),
+def donation_packs_kb(currency: str, lang: str = "ru") -> InlineKeyboardMarkup:
+    from services.donations import fmt_minor, packs
+
+    rows: list[list[InlineKeyboardButton]] = []
+    items = sorted(packs(currency).items())
+    for start in range(0, len(items), 2):
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    text=f"{shards}🔮 - {fmt_minor(currency, base_minor)}",
+                    callback_data=DonateCB(
+                        action="pack", value=f"{currency}_{base_minor}"
+                    ).pack(),
+                )
+                for base_minor, shards in items[start:start + 2]
+            ]
         )
-    builder.button(text=t(lang, "↩️ К валютам"), callback_data=MenuCB(action="donate"))
-    builder.button(text=t(lang, "🏠 В меню"), callback_data=MenuCB(action="main"))
-    builder.adjust(1)
-    return builder.as_markup()
+    rows.append(
+        [InlineKeyboardButton(text=t(lang, "⬅️ Назад"), callback_data=MenuCB(action="donate").pack())]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def donation_order_kb(lang: str, order_id: int, url: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=t(lang, "🌐 Открыть страницу доната"), url=url)],
+            [
+                InlineKeyboardButton(
+                    text=t(lang, "❌ Отменить заявку"),
+                    callback_data=DonateCB(action="cancel", value=str(order_id)).pack(),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=t(lang, "↩️ В меню"), callback_data=MenuCB(action="main").pack()
+                )
+            ],
+        ]
+    )
+
+
+def donation_claim_kb(donation_id: int, order_id: int, lang: str = "ru") -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=t(lang, "✅ Это мой платёж"),
+                    callback_data=DonateClaimCB(
+                        donation_id=donation_id, order_id=order_id
+                    ).pack(),
+                )
+            ]
+        ]
+    )
+
+
+def admin_donations_kb(items: list[dict]) -> InlineKeyboardMarkup:
+    rows = [
+        [
+            InlineKeyboardButton(
+                text=f"✅ {item['label']} → {item['suggested']}🔮",
+                callback_data=AdminDonateCB(
+                    action="credit", donation_id=item["id"]
+                ).pack(),
+            ),
+            InlineKeyboardButton(
+                text="🚫",
+                callback_data=AdminDonateCB(
+                    action="ignore", donation_id=item["id"]
+                ).pack(),
+            ),
+        ]
+        for item in items
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 RARITY_LABELS = {

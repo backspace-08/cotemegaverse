@@ -34,14 +34,19 @@ class ExchangeCB(CallbackData, prefix="exch"):
     count: int  # 0 means "all"
 
 
-class DonateCB(CallbackData, prefix="donate"):
-    currency: str  # RUB | USD
+class DonateCB(CallbackData, prefix="don"):
+    action: str  # packs | pack | cancel
+    value: str = ""  # currency code, or "<CUR>:<base_minor>", or an order id
 
 
-class BuyCB(CallbackData, prefix="buy"):
-    currency: str
-    amount: str
-    shards: int
+class DonateClaimCB(CallbackData, prefix="dcl"):
+    donation_id: int
+    order_id: int
+
+
+class AdminDonateCB(CallbackData, prefix="adn"):
+    action: str  # credit | ignore
+    donation_id: int
 
 
 class AdminUsersCB(CallbackData, prefix="ausr"):

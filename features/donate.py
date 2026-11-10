@@ -1,24 +1,52 @@
-from aiogram import Bot, F, Router
-from aiogram.types import CallbackQuery, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+"""Donations via DonationAlerts: a unique amount identifies the payer.
 
-from config import RUB_PRICES, USD_PRICES
-from core.callbacks import BuyCB, DonateCB, MenuCB
+The user picks a currency and a shard pack; the bot reserves an exact amount for
+them ("500₽ pack" becomes e.g. 498.37 ₽) for 48 hours. The payment is matched by
+amount + currency, so the instructions must be followed literally.
+"""
+
+from aiogram import Bot, F, Router
+from aiogram.types import CallbackQuery
+
+from config import DONATION_DA_CURRENCY, DONATION_PAGE_URL
+from core.callbacks import DonateCB, DonateClaimCB, MenuCB
 from core.i18n import t
-from core.keyboards import donate_currencies_kb, donate_prices_kb
+from core.keyboards import donation_currency_kb, donation_order_kb, donation_packs_kb
 from core.logger import logger
 from core.utils import run_db, safe_delete_message
-from db.queries import save_pending_payment
-from services.payments import create_lava_invoice
+from services import donations
 
 router = Router()
 
-USER_AGREEMENT_URL = "https://telegra.ph/Polzovatelskoe-soglashenie-07-09-20"
+CURRENCY_LABEL = {"RUB": "🇷🇺 Рубли", "USD": "🇺🇸 Доллары", "EUR": "🇪🇺 Евро"}
 
-PRICE_MAP = {
-    "RUB": (RUB_PRICES, "₽", "🇷🇺"),
-    "USD": (USD_PRICES, "$", "🇺🇸"),
-}
+
+def _time_left(until, lang: str) -> str:
+    seconds = max(0, int((until - donations.utcnow()).total_seconds()))
+    hours, rest = divmod(seconds, 3600)
+    minutes = rest // 60
+    if hours:
+        return t(lang, "{hours} ч {minutes} мин", hours=hours, minutes=minutes)
+    return t(lang, "{minutes} мин", minutes=minutes)
+
+
+def _order_text(order: dict, lang: str) -> str:
+    number = donations.amount_number(order["amount_minor"])
+    return t(
+        lang,
+        "💳 <b>Платёжная заявка</b>\n\n"
+        "{shards}🔮 за <code>{number}</code> {symbol}\n"
+        "Действует ещё {left}.\n\n"
+        "На странице доната:\n"
+        "1) валюта - {currency};\n"
+        "2) сумма - <code>{number}</code>.\n\n"
+        "⚠️ Другая валюта или сумма - платёж уйдёт на ручную проверку.",
+        shards=order["shards"],
+        number=number,
+        symbol=donations.currency_symbol(order["currency"]),
+        left=_time_left(order["match_until"], lang),
+        currency=DONATION_DA_CURRENCY.get(order["currency"], order["currency"]),
+    )
 
 
 @router.callback_query(MenuCB.filter(F.action == "donate"))
@@ -26,90 +54,104 @@ async def show_donate_menu(callback: CallbackQuery, bot: Bot, lang: str) -> None
     await safe_delete_message(bot, callback.message.chat.id, callback.message.message_id)
     await bot.send_message(
         callback.message.chat.id,
-        t(lang, "@prices")
-        + f'<b><a href="{USER_AGREEMENT_URL}">{t(lang, "📝Пользовательское соглашение")}</a></b>',
-        reply_markup=donate_currencies_kb(lang),
-        disable_web_page_preview=True,
+        t(
+            lang,
+            "💸 <b>Донат</b>\n\n"
+            "Выбери валюту. Оплатить нужно ровно в той же валюте, "
+            "которую выберешь здесь.",
+        ),
+        reply_markup=donation_currency_kb(lang),
     )
     await callback.answer()
 
 
-@router.callback_query(DonateCB.filter())
-async def show_donate_prices(
-    callback: CallbackQuery, callback_data: DonateCB, bot: Bot, lang: str
+@router.callback_query(DonateCB.filter(F.action == "packs"))
+async def show_packs(
+    callback: CallbackQuery, callback_data: DonateCB, lang: str
 ) -> None:
-    currency = callback_data.currency
-    if currency not in PRICE_MAP:
+    currency = callback_data.value
+    if currency not in CURRENCY_LABEL:
         await callback.answer(t(lang, "Неизвестная валюта"), show_alert=True)
         return
+    await callback.message.edit_text(
+        t(
+            lang,
+            "💸 <b>Донат</b> · {currency}\n\nВыбери количество:",
+            currency=t(lang, CURRENCY_LABEL[currency]),
+        ),
+        reply_markup=donation_packs_kb(currency, lang),
+    )
+    await callback.answer()
 
-    price_dict, symbol, flag = PRICE_MAP[currency]
-    prices = "\n".join(f"{amount}{symbol} - {shards}🔮" for amount, shards in price_dict.items())
+
+@router.callback_query(DonateCB.filter(F.action == "pack"))
+async def create_pack(
+    callback: CallbackQuery, callback_data: DonateCB, bot: Bot, user_id: int, lang: str
+) -> None:
+    try:
+        currency, base = callback_data.value.split("_")
+        base_minor = int(base)
+    except ValueError:
+        await callback.answer(t(lang, "Неизвестный вариант"), show_alert=True)
+        return
+
+    order = await run_db(donations.create_order, user_id, currency, base_minor)
+    if order is None:
+        await callback.answer(
+            t(lang, "Сейчас нет свободных сумм, попробуй через пару минут"),
+            show_alert=True,
+        )
+        return
+
+    logger.info(
+        f"donate: user={user_id} order={order['id']} "
+        f"{order['shards']} shards for {donations.fmt_minor(currency, order['amount_minor'])}"
+    )
     await safe_delete_message(bot, callback.message.chat.id, callback.message.message_id)
     await bot.send_message(
         callback.message.chat.id,
-        t(
-            lang,
-            "{flag} <b>{currency}</b>\n\n<blockquote>{prices}</blockquote>\n\n"
-            "Нажмите на сумму для оплаты.",
-            flag=flag,
-            currency=currency,
-            prices=prices,
-        ),
-        reply_markup=donate_prices_kb(currency, price_dict, symbol, lang),
+        _order_text(order, lang),
+        reply_markup=donation_order_kb(lang, order["id"], DONATION_PAGE_URL),
     )
     await callback.answer()
 
 
-@router.callback_query(BuyCB.filter())
-async def handle_purchase(
-    callback: CallbackQuery, callback_data: BuyCB, bot: Bot, user_id: int, lang: str
+@router.callback_query(DonateCB.filter(F.action == "cancel"))
+async def cancel_order(
+    callback: CallbackQuery, callback_data: DonateCB, bot: Bot, user_id: int, lang: str
 ) -> None:
-    await safe_delete_message(bot, callback.message.chat.id, callback.message.message_id)
-    status = await bot.send_message(callback.message.chat.id, t(lang, "🔄 Создание счёта..."))
-
     try:
-        invoice_id, payment_url = await create_lava_invoice(
-            user_id, callback_data.currency, float(callback_data.amount), lang
-        )
-    except Exception as e:  # noqa: BLE001
-        logger.error(f"Lava invoice error: {e}")
-        invoice_id, payment_url = None, t(lang, "Ошибка создания счёта. Попробуйте позже.")
-
-    if invoice_id is None:
-        await bot.edit_message_text(payment_url, chat_id=status.chat.id, message_id=status.message_id)
+        order_id = int(callback_data.value)
+    except ValueError:
         await callback.answer()
         return
+    cancelled = await run_db(donations.cancel_order, user_id, order_id)
+    await callback.answer(
+        t(lang, "Заявка отменена" if cancelled else "Не найдено"),
+        show_alert=not cancelled,
+    )
+    if not cancelled:
+        return
+    await safe_delete_message(bot, callback.message.chat.id, callback.message.message_id)
+    await bot.send_message(
+        callback.message.chat.id,
+        t(lang, "Заявка отменена. Если платёж уже в пути, он всё равно зачтётся."),
+    )
 
-    # Persist the pending invoice BEFORE showing the link, so a restart cannot
-    # lose a payment that the user is about to make.
-    await run_db(
-        save_pending_payment,
-        invoice_id,
+
+@router.callback_query(DonateClaimCB.filter())
+async def claim_payment(
+    callback: CallbackQuery, callback_data: DonateClaimCB, user_id: int, lang: str
+) -> None:
+    result = await run_db(
+        donations.claim_ambiguous,
+        callback_data.donation_id,
+        callback_data.order_id,
         user_id,
-        callback_data.shards,
-        callback_data.currency,
-        float(callback_data.amount),
     )
-
-    builder = InlineKeyboardBuilder()
-    builder.row(InlineKeyboardButton(text=t(lang, "💳 Оплатить"), url=payment_url))
-    builder.row(
-        InlineKeyboardButton(text=t(lang, "↩️ В меню"), callback_data=MenuCB(action="main").pack())
-    )
-
-    await bot.edit_message_text(
-        t(
-            lang,
-            "🔮 {shards} осколков за {amount}{currency}\n\n"
-            "Нажмите «Оплатить» для перехода к платёжной системе.",
-            shards=callback_data.shards,
-            amount=callback_data.amount,
-            currency=callback_data.currency,
-        ),
-        chat_id=status.chat.id,
-        message_id=status.message_id,
-        reply_markup=builder.as_markup(),
-    )
-
-    await callback.answer()
+    if result.get("status") == "matched":
+        await callback.answer(
+            t(lang, "✅ Зачтено: +{shards}🔮", shards=result["shards"]), show_alert=True
+        )
+    else:
+        await callback.answer(t(lang, "Этот платёж уже разобран"), show_alert=True)

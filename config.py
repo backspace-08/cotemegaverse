@@ -108,6 +108,43 @@ USD_PRICES = {
     69: 8000,
 }
 
+EUR_PRICES = {
+    7: 600,
+    14: 1300,
+    27: 3000,
+    69: 8000,
+}
+
+# ── Донаты через DonationAlerts ──
+# Юзер платит уникальную сумму: номинал пачки минус небольшой «диапазон».
+# Копейки/центы и есть идентификатор заказа.
+DONATION_PAGE_URL = os.getenv('DONATION_PAGE_URL', 'https://dalink.to/backspace_08')
+DONATION_PRICES = {'RUB': RUB_PRICES, 'USD': USD_PRICES, 'EUR': EUR_PRICES}
+# Как эта валюта называется в форме DonationAlerts (её и надо выбрать).
+DONATION_DA_CURRENCY = {
+    'RUB': '₽ RUB',
+    'USD': '$ USD',
+    'EUR': '€ EUR',
+}
+# Диапазон в минорных единицах: обычный и аварийный (клапан при оверфлоу).
+DONATION_RANGE = {'RUB': 200, 'USD': 10, 'EUR': 10}
+DONATION_RANGE_OVERFLOW = {'RUB': 500, 'USD': 25, 'EUR': 25}
+# DALink не принимает суммы ниже этого порога; пачки, у которых диапазон
+# «вниз» упирается в порог, получают диапазон «вверх» от номинала.
+DONATION_MIN_MINOR = {'RUB': 10000, 'USD': 100, 'EUR': 100}
+DONATION_MATCH_HOURS = 48      # сколько сумма закреплена за заказом
+DONATION_REUSE_HOURS = 72      # кулдаун перед переиспользованием суммы
+DONATION_POLL_SECONDS = int(os.getenv('DONATION_POLL_SECONDS', '10'))
+
+DONATIONALERTS_TOKEN = os.getenv('DONATIONALERTS_TOKEN', '')
+DONATIONALERTS_CLIENT_ID = os.getenv('DONATIONALERTS_CLIENT_ID', '15527')
+DONATIONALERTS_REDIRECT_URI = os.getenv(
+    'DONATIONALERTS_REDIRECT_URI', 'http://localhost:9080/da_callback'
+)
+DONATIONALERTS_SCOPE = os.getenv('DONATIONALERTS_SCOPE', 'oauth-donation-index')
+DONATIONALERTS_CLIENT_SECRET = os.getenv('DONATIONALERTS_CLIENT_SECRET', '')
+DONATIONALERTS_REFRESH_TOKEN = os.getenv('DONATIONALERTS_REFRESH_TOKEN', '')
+
 ANIMATED_EXTENSIONS = {'.gif', '.mp4', '.webm'}
 SHARD_MAP = {
     'common': 1, 'rare': 3, 'epic': 10,

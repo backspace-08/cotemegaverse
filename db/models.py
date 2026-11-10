@@ -345,3 +345,98 @@ class ShopRotation(Base):
     rarity = Column(Text)
 
     __table_args__ = (UniqueConstraint("user_id", "day", "slot", name="uq_shop_rotation"),)
+
+# ──────────────────────────────────────────────
+# ДОНАТЫ (DonationAlerts)
+# ──────────────────────────────────────────────
+
+class DonationSlot(Base):
+    """A unique amount reserved for a pack: (currency, pack price, exact amount).
+
+    Rows exist for the whole possible range; `reserved_until` keeps an amount out
+    of circulation for the match window plus a cooldown, so a late payment can
+    never be matched to somebody else's order.
+    """
+
+    __tablename__ = "donation_slots"
+
+    currency = Column(Text, primary_key=True)
+    base_minor = Column(Integer, primary_key=True)
+    amount_minor = Column(Integer, primary_key=True)
+    reserved_until = Column(TIMESTAMP)
+    last_used_at = Column(TIMESTAMP)
+
+
+class DonationOrder(Base):
+    __tablename__ = "donation_orders"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    user_id = Column(BigInteger, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    currency = Column(Text, nullable=False)
+    base_minor = Column(Integer, nullable=False)
+    amount_minor = Column(Integer, nullable=False)
+    shards = Column(Integer, nullable=False)
+    status = Column(Text, nullable=False, default="pending")  # pending | paid | cancelled
+    flag = Column(Text, default="")  # "" | base | claim | manual
+    created_at = Column(TIMESTAMP, default=func.now())
+    match_until = Column(TIMESTAMP, nullable=False)
+    paid_at = Column(TIMESTAMP)
+    donation_id = Column(BigInteger)
+
+    __table_args__ = (
+        Index("ix_donation_orders_lookup", "currency", "amount_minor", "status"),
+        Index("ix_donation_orders_user", "user_id", "status"),
+    )
+
+
+class Donation(Base):
+    """One event from the donation provider (deduplicated by provider id)."""
+
+    __tablename__ = "donations"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    provider = Column(Text, nullable=False, default="donationalerts")
+    provider_id = Column(BigInteger, nullable=False)
+    amount_minor = Column(Integer, nullable=False)
+    currency = Column(Text, nullable=False)
+    username = Column(Text)
+    message = Column(Text)
+    created_at = Column(TIMESTAMP)
+    received_at = Column(TIMESTAMP, default=func.now())
+    status = Column(Text, nullable=False, default="new")  # matched | ambiguous | manual | ignored
+    order_id = Column(BigInteger)
+    note = Column(Text, default="")
+    raw = Column(JSONB)
+
+    __table_args__ = (
+        UniqueConstraint("provider", "provider_id", name="uq_donation_provider"),
+        Index("ix_donations_status", "status"),
+    )
+
+
+class DonationCredit(Base):
+    """Audit trail: who got shards for which donation/order."""
+
+    __tablename__ = "donation_credits"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    donation_id = Column(BigInteger)
+    order_id = Column(BigInteger)
+    user_id = Column(BigInteger, nullable=False)
+    shards = Column(Integer, nullable=False)
+    amount_minor = Column(Integer, nullable=False)
+    currency = Column(Text, nullable=False)
+    created_at = Column(TIMESTAMP, default=func.now())
+
+
+class DonationToken(Base):
+    """OAuth tokens for the DonationAlerts API (single row, id=1)."""
+
+    __tablename__ = "donation_tokens"
+
+    id = Column(Integer, primary_key=True, default=1)
+    access_token = Column(Text)
+    refresh_token = Column(Text)
+    expires_at = Column(TIMESTAMP)
+    state = Column(Text)  # one-time OAuth state of the pending /da_auth link
+    updated_at = Column(TIMESTAMP, default=func.now(), onupdate=func.now())

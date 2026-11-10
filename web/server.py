@@ -1,3 +1,5 @@
+from html import escape
+
 from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
@@ -19,6 +21,38 @@ _LAVA_PAGE = """<!DOCTYPE html>
 
 async def _health(_request: web.Request) -> web.Response:
     return web.Response(text="OK")
+
+
+def _page(title: str, text: str) -> str:
+    return (
+        "<!doctype html><meta charset='utf-8'>"
+        "<body style='font-family:system-ui;padding:2em;max-width:640px'>"
+        f"<h3>{escape(title)}</h3><p>{escape(text)}</p></body>"
+    )
+
+
+async def _da_callback(request: web.Request) -> web.Response:
+    """DonationAlerts OAuth redirect: exchange ?code for tokens."""
+    from services.donationalerts import exchange_code
+
+    if request.query.get("error"):
+        return web.Response(
+            text=_page("DonationAlerts", f"Отказ: {request.query['error']}"),
+            content_type="text/html",
+        )
+    code = request.query.get("code")
+    if not code:
+        return web.Response(
+            status=400,
+            text=_page("DonationAlerts", "В ссылке нет code — начни заново: /da_auth"),
+            content_type="text/html",
+        )
+    ok, message = await exchange_code(code, request.query.get("state"))
+    return web.Response(
+        status=200 if ok else 400,
+        text=_page("DonationAlerts", message),
+        content_type="text/html",
+    )
 
 
 async def _lava_webhook(request: web.Request) -> web.Response:
@@ -52,6 +86,7 @@ def build_app(bot: Bot, dp: Dispatcher, with_telegram_webhook: bool) -> web.Appl
     app = web.Application()
     app["bot"] = bot
     app.router.add_get("/health", _health)
+    app.router.add_get("/da_callback", _da_callback)
     app.router.add_route("*", "/lava_webhook", _lava_webhook)
 
     if with_telegram_webhook:
