@@ -220,19 +220,21 @@ async def _send(bot, chat_id: int, text: str, reply_markup=None) -> None:
 
 
 async def notify_admin_credit(bot, result: dict, donor: str | None = None) -> None:
-    """Tell the admin about a credited donation."""
+    """One message per credited donation: who paid, how much, who got it."""
     user = await run_db(get_user_data, result["user_id"])
+    ident = f"<code>{result['user_id']}</code>"
     if user is None:
-        who = str(result["user_id"])
+        who = f"id {ident}"
     elif user.username:
-        who = f"@{user.username}"
+        who = f"@{user.username} (id {ident})"
     else:
-        who = user.first_name or str(result["user_id"])
+        who = f"{user.first_name or 'без имени'} (id {ident})"
     text = (
-        f"💸 Донат зачтён: {fmt_minor(result['currency'], result['amount_minor'])} "
-        f"→ +{result['shards']}🔮\n"
-        f"👤 {who} (id {result['user_id']})\n"
-        f"🆔 заявка #{result['order_id']} · {result.get('flag') or 'exact'}"
+        f"💸 Донат зачтён: "
+        f"{fmt_minor(result['currency'], result['amount_minor'])} → "
+        f"+{result['shards']}🔮\n"
+        f"👤 {who}\n"
+        f"Заявка #{result['order_id']}"
     )
     if donor:
         text += f"\nПлательщик: {donor}"
@@ -240,8 +242,6 @@ async def notify_admin_credit(bot, result: dict, donor: str | None = None) -> No
 
 
 async def _process(bot, item: dict) -> None:
-    from core.keyboards import donation_claim_kb
-
     try:
         provider_id = int(item["id"])
         amount_minor = int(round(float(item.get("amount") or 0) * 100))
@@ -280,35 +280,24 @@ async def _process(bot, item: dict) -> None:
             f"DonationAlerts: donation {provider_id} matched to user {result['user_id']} "
             f"({amount}, +{result['shards']} shards, flag={result.get('flag') or 'exact'})"
         )
-    elif status == "ambiguous":
-        for candidate in result["candidates"]:
-            lang = await run_db(get_user_lang, candidate["user_id"]) or "ru"
-            await _send(
-                bot,
-                candidate["user_id"],
-                t(
-                    lang,
-                    "💸 Пришёл платёж на {amount}. Это твой? Подтверди, чтобы зачесть.",
-                    amount=amount,
-                ),
-                donation_claim_kb(result["donation_id"], candidate["order_id"], lang),
-            )
-        await _send(
-            bot,
-            ADMIN_ID,
-            f"💸 Донат {amount} подходит к нескольким заявкам "
-            f"({len(result['candidates'])}). Отправлены пуши на подтверждение.",
-        )
     elif status == "manual":
-        username = item.get("username") or "аноним"
-        message = (item.get("message") or "").strip() or "-"
+        from core.keyboards import admin_donation_card_kb
+        from services.donation_ui import card_text
+
+        candidates = result.get("candidates") or []
+        donation = {
+            "id": result["donation_id"],
+            "amount_minor": amount_minor,
+            "currency": currency,
+            "username": item.get("username"),
+            "message": item.get("message"),
+            "note": result.get("reason"),
+        }
         await _send(
             bot,
             ADMIN_ID,
-            f"💸 Донат {amount} от {username}\n"
-            f"Сообщение: {message}\n"
-            f"Причина: {result.get('reason')} · заявка не найдена.\n"
-            f"Разобрать: /donations",
+            card_text(donation, candidates),
+            admin_donation_card_kb(donation["id"], candidates, 0),
         )
         logger.info(f"DonationAlerts: donation {provider_id} queued for admin ({result.get('reason')})")
 

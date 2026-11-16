@@ -326,7 +326,7 @@ def match_donation(
             donation.note = "currency"
             return {"status": "manual", "donation_id": donation.id, "reason": "currency"}
 
-        order = session.execute(
+        exact = session.execute(
             select(DonationOrder)
             .where(
                 DonationOrder.currency == currency,
@@ -335,14 +335,21 @@ def match_donation(
                 DonationOrder.match_until > now,
             )
             .with_for_update()
-        ).scalars().first()
-        if order is not None:
-            return _credit(session, donation, order)
+        ).scalars().all()
+        if len(exact) == 1:
+            return _credit(session, donation, exact[0])
 
-        if amount_minor % MINOR == 0:
+        # No single exact order: the admin decides. Collect the orders that could
+        # be related, with ids and tags, and put the donation in the queue. Nobody
+        # is asked to "claim" a payment: guessing between users credits the wrong
+        # person and sends pushes to people who paid nothing.
+        if len(exact) > 1:
+            rows = exact
+            note = "collision"
+        else:
             base = _pack_for_amount(currency, amount_minor)
-            if base is not None:
-                candidates = session.execute(
+            rows = (
+                session.execute(
                     select(DonationOrder)
                     .where(
                         DonationOrder.currency == currency,
@@ -352,47 +359,119 @@ def match_donation(
                     )
                     .order_by(DonationOrder.id)
                 ).scalars().all()
-                if len(candidates) == 1:
-                    return _credit(session, donation, candidates[0], flag="base")
-                if len(candidates) > 1:
-                    donation.status = "ambiguous"
-                    donation.note = "base"
-                    return {
-                        "status": "ambiguous",
-                        "donation_id": donation.id,
-                        "candidates": [
-                            {"user_id": item.user_id, "order_id": item.id}
-                            for item in candidates
-                        ],
-                    }
+                if base is not None
+                else []
+            )
+            note = "ambiguous" if rows else "no_match"
+
+        candidates = []
+        for order in rows:
+            user = session.get(User, order.user_id)
+            candidates.append(
+                {
+                    "user_id": order.user_id,
+                    "order_id": order.id,
+                    "amount_minor": order.amount_minor,
+                    "username": user.username if user else None,
+                    "first_name": user.first_name if user else None,
+                }
+            )
 
         donation.status = "manual"
-        donation.note = "no_match"
-        return {"status": "manual", "donation_id": donation.id, "reason": "no_match"}
-
-
-def claim_ambiguous(donation_id: int, order_id: int, user_id: int) -> dict:
-    """A candidate confirmed the payment; the first claim wins."""
-    with get_session() as session:
-        donation = session.get(Donation, donation_id)
-        order = session.get(DonationOrder, order_id)
-        if donation is None or donation.status != "ambiguous":
-            return {"status": "taken"}
-        if order is None or order.user_id != user_id or order.status != "pending":
-            return {"status": "taken"}
-        return _credit(session, donation, order, flag="claim")
+        donation.note = note
+        return {
+            "status": "manual",
+            "donation_id": donation.id,
+            "reason": note,
+            "candidates": candidates,
+        }
 
 
 # ──────────────────────────────────────────────
 # Admin queue
 # ──────────────────────────────────────────────
 
-def list_unmatched(limit: int = 10) -> list[dict]:
+def admin_credit_order(donation_id: int, order_id: int, user_id: int) -> dict | None:
+    """Credit a donation to one of the suggested orders, chosen by the admin."""
+    with get_session() as session:
+        donation = session.get(Donation, donation_id)
+        order = session.get(DonationOrder, order_id)
+        if donation is None or donation.status in ("matched", "ignored"):
+            return None
+        if order is None or order.user_id != user_id or order.status != "pending":
+            return None
+        return _credit(session, donation, order, flag="admin")
+
+
+def count_unmatched() -> int:
+    with get_session() as session:
+        return int(
+            session.execute(
+                select(func.count())
+                .select_from(Donation)
+                .where(Donation.status.in_(("manual", "ambiguous")))
+            ).scalar()
+            or 0
+        )
+
+
+def donation_candidates(donation_id: int) -> list[dict]:
+    """Pending orders that could belong to an unmatched donation."""
+    with get_session() as session:
+        donation = session.get(Donation, donation_id)
+        if donation is None or donation.currency not in DONATION_PRICES:
+            return []
+        now = utcnow()
+        exact = session.execute(
+            select(DonationOrder)
+            .where(
+                DonationOrder.currency == donation.currency,
+                DonationOrder.amount_minor == donation.amount_minor,
+                DonationOrder.status == "pending",
+                DonationOrder.match_until > now,
+            )
+            .order_by(DonationOrder.id)
+        ).scalars().all()
+        if len(exact) > 1:
+            rows = exact
+        else:
+            base = _pack_for_amount(donation.currency, donation.amount_minor)
+            rows = (
+                session.execute(
+                    select(DonationOrder)
+                    .where(
+                        DonationOrder.currency == donation.currency,
+                        DonationOrder.base_minor == base,
+                        DonationOrder.status == "pending",
+                        DonationOrder.match_until > now,
+                    )
+                    .order_by(DonationOrder.id)
+                ).scalars().all()
+                if base is not None
+                else exact
+            )
+        candidates = []
+        for order in rows:
+            user = session.get(User, order.user_id)
+            candidates.append(
+                {
+                    "user_id": order.user_id,
+                    "order_id": order.id,
+                    "amount_minor": order.amount_minor,
+                    "username": user.username if user else None,
+                    "first_name": user.first_name if user else None,
+                }
+            )
+        return candidates
+
+
+def list_unmatched(limit: int = 10, offset: int = 0) -> list[dict]:
     with get_session() as session:
         rows = session.execute(
             select(Donation)
             .where(Donation.status.in_(("manual", "ambiguous")))
             .order_by(Donation.id.desc())
+            .offset(offset)
             .limit(limit)
         ).scalars().all()
         return [
@@ -441,7 +520,7 @@ def admin_credit(donation_id: int, user_id: int, shards: int | None = None) -> d
 def ignore_donation(donation_id: int) -> bool:
     with get_session() as session:
         donation = session.get(Donation, donation_id)
-        if donation is None or donation.status == "matched":
+        if donation is None or donation.status in ("matched", "ignored"):
             return False
         donation.status = "ignored"
         return True
@@ -459,4 +538,6 @@ def get_donation(donation_id: int) -> dict | None:
             "username": row.username,
             "message": row.message,
             "status": row.status,
+            "note": row.note,
+            "created_at": row.created_at,
         }

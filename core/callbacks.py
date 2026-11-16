@@ -39,14 +39,17 @@ class DonateCB(CallbackData, prefix="don"):
     value: str = ""  # currency code, or "<CUR>:<base_minor>", or an order id
 
 
-class DonateClaimCB(CallbackData, prefix="dcl"):
+class AdminDonateCB(CallbackData, prefix="adn"):
+    action: str  # list | page | open | manual | ignore
+    donation_id: int = 0
+    page: int = 0
+
+
+class AdminDonatePickCB(CallbackData, prefix="adp"):
     donation_id: int
     order_id: int
-
-
-class AdminDonateCB(CallbackData, prefix="adn"):
-    action: str  # credit | ignore
-    donation_id: int
+    user_id: int
+    page: int = 0
 
 
 class AdminUsersCB(CallbackData, prefix="ausr"):

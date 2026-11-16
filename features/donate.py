@@ -9,7 +9,7 @@ from aiogram import Bot, F, Router
 from aiogram.types import CallbackQuery
 
 from config import DONATION_DA_CURRENCY, DONATION_PAGE_URL
-from core.callbacks import DonateCB, DonateClaimCB, MenuCB
+from core.callbacks import DonateCB, MenuCB
 from core.i18n import t
 from core.keyboards import donation_currency_kb, donation_order_kb, donation_packs_kb
 from core.logger import logger
@@ -40,7 +40,8 @@ def _order_text(order: dict, lang: str) -> str:
         "На странице доната:\n"
         "1) валюта - {currency};\n"
         "2) сумма - <code>{number}</code>.\n\n"
-        "⚠️ Другая валюта или сумма - платёж уйдёт на ручную проверку.",
+        "⚠️ Другая валюта или сумма - платёж уйдёт на ручную проверку.\n"
+        "Если нужной валюты нет, попробуйте выключить VPN.",
         shards=order["shards"],
         number=number,
         symbol=donations.currency_symbol(order["currency"]),
@@ -76,7 +77,7 @@ async def show_packs(
     await callback.message.edit_text(
         t(
             lang,
-            "💸 <b>Донат</b> · {currency}\n\nВыбери количество:",
+            "💸 <b>Донат</b>\n{currency}\n\nВыбери количество:",
             currency=t(lang, CURRENCY_LABEL[currency]),
         ),
         reply_markup=donation_packs_kb(currency, lang),
@@ -140,27 +141,3 @@ async def cancel_order(
     )
 
 
-@router.callback_query(DonateClaimCB.filter())
-async def claim_payment(
-    callback: CallbackQuery, callback_data: DonateClaimCB, bot: Bot, user_id: int, lang: str
-) -> None:
-    result = await run_db(
-        donations.claim_ambiguous,
-        callback_data.donation_id,
-        callback_data.order_id,
-        user_id,
-    )
-    if result.get("status") == "matched":
-        if result.get("message_id"):
-            try:
-                await bot.delete_message(user_id, result["message_id"])
-            except Exception:  # noqa: BLE001
-                pass
-        from services.donationalerts import notify_admin_credit
-
-        await notify_admin_credit(bot, result)
-        await callback.answer(
-            t(lang, "✅ Зачтено: +{shards}🔮", shards=result["shards"]), show_alert=True
-        )
-    else:
-        await callback.answer(t(lang, "Этот платёж уже разобран"), show_alert=True)

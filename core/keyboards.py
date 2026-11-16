@@ -5,10 +5,10 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from config import MAX_CHARACTER_LEVEL
 from core.callbacks import (
     AdminDonateCB,
+    AdminDonatePickCB,
     AdminUsersCB,
     CharPageCB,
     DonateCB,
-    DonateClaimCB,
     ExchangeCB,
     GachaCB,
     LangCB,
@@ -227,40 +227,107 @@ def donation_order_kb(lang: str, order_id: int, url: str) -> InlineKeyboardMarku
     )
 
 
-def donation_claim_kb(donation_id: int, order_id: int, lang: str = "ru") -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=t(lang, "✅ Это мой платёж"),
-                    callback_data=DonateClaimCB(
-                        donation_id=donation_id, order_id=order_id
-                    ).pack(),
-                )
-            ]
-        ]
-    )
-
-
-def admin_donations_kb(items: list[dict]) -> InlineKeyboardMarkup:
+def admin_donations_list_kb(
+    items: list[dict], page: int, pages: int
+) -> InlineKeyboardMarkup:
+    """Compact inbox: one #id button per donation, plus paging."""
     rows = [
         [
             InlineKeyboardButton(
-                text=f"✅ {item['label']} → {item['suggested']}🔮",
+                text=f"#{item['id']}",
                 callback_data=AdminDonateCB(
-                    action="credit", donation_id=item["id"]
+                    action="open", donation_id=item["id"], page=page
+                ).pack(),
+            )
+        ]
+        for item in items
+    ]
+    if pages > 1:
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    text="◀️",
+                    callback_data=AdminDonateCB(
+                        action="page", page=(page - 1) % pages
+                    ).pack(),
+                ),
+                InlineKeyboardButton(
+                    text=f"{page + 1}/{pages}",
+                    callback_data=AdminDonateCB(action="page", page=page).pack(),
+                ),
+                InlineKeyboardButton(
+                    text="▶️",
+                    callback_data=AdminDonateCB(
+                        action="page", page=(page + 1) % pages
+                    ).pack(),
+                ),
+            ]
+        )
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def admin_donation_card_kb(
+    donation_id: int, candidates: list[dict], page: int
+) -> InlineKeyboardMarkup:
+    """Candidate buttons first, then manual credit, ignore and back."""
+    rows = []
+    for candidate in candidates:
+        label = (
+            f"@{candidate['username']}"
+            if candidate.get("username")
+            else candidate.get("first_name") or "без тега"
+        )
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    text=f"✅ {label} · #{candidate['order_id']}"[:64],
+                    callback_data=AdminDonatePickCB(
+                        donation_id=donation_id,
+                        order_id=candidate["order_id"],
+                        user_id=candidate["user_id"],
+                        page=page,
+                    ).pack(),
+                )
+            ]
+        )
+    rows.append(
+        [
+            InlineKeyboardButton(
+                text="✍️ Другой игрок",
+                callback_data=AdminDonateCB(
+                    action="manual", donation_id=donation_id, page=page
                 ).pack(),
             ),
             InlineKeyboardButton(
                 text="🚫",
                 callback_data=AdminDonateCB(
-                    action="ignore", donation_id=item["id"]
+                    action="ignore", donation_id=donation_id, page=page
                 ).pack(),
             ),
         ]
-        for item in items
-    ]
+    )
+    rows.append(
+        [
+            InlineKeyboardButton(
+                text="◀️ К списку",
+                callback_data=AdminDonateCB(action="list", page=page).pack(),
+            )
+        ]
+    )
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def admin_donation_result_kb(page: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="◀️ К списку",
+                    callback_data=AdminDonateCB(action="list", page=page).pack(),
+                )
+            ]
+        ]
+    )
 
 
 RARITY_LABELS = {
