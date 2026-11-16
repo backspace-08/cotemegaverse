@@ -19,7 +19,9 @@ jobs:
                   key: ${{ secrets.SSH_KEY }}
                   port: 22
                   script: |
+                     set -e
                      cd /var/www/megaverse
-                     git pull origin production
-
+                     git fetch origin
+                     git checkout production
+                     git reset --hard origin/production
                      docker compose up -d --build
